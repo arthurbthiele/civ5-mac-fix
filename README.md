@@ -7,7 +7,7 @@ the turn hits it again, which can make a long save unplayable.
 This is a 16-byte fix for the bug that causes it. It's a real bug in the game's rules engine, present
 since 2013, harmless on Windows and fatal on the 64-bit Mac build.
 
-Full write-up of the cause: **POST_URL**
+Full write-up of the cause: <https://arthurthiele.com/writing/civ-v-capital-crash/>
 
 Affects any Mac running macOS Catalina (2019) or later — Intel or Apple Silicon.
 

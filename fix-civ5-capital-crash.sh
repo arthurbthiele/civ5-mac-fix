@@ -8,7 +8,7 @@
 # it. Nothing is downloaded, nothing needs admin rights, and the original file is
 # backed up first.
 #
-# Full explanation: <POST URL>
+# Full explanation: https://arthurthiele.com/writing/civ-v-capital-crash/
 #
 # Usage:
 #   ./fix-civ5-capital-crash.sh              apply the fix
