@@ -24,7 +24,7 @@ download button. It'll land in your Downloads folder.
 paste it into the Terminal window, and press Enter:
 
 ```
-cd ~/Downloads && bash fix-civ5-capital-crash.sh
+bash ~/Downloads/fix-civ5-capital-crash.sh
 ```
 
 You should see:
@@ -39,10 +39,10 @@ All done. Start Civilization V and load the save that was crashing.
 
 That's it. Start the game and load your save.
 
-**Not sure if you're affected?** Run this instead — it only looks, and changes nothing:
+**Want to look before changing anything?** This reports which of three states your game files are in — unmodified and carrying the bug, already fixed, or a version this script doesn't recognise. It only reads; it changes nothing:
 
 ```
-cd ~/Downloads && bash fix-civ5-capital-crash.sh --check
+bash ~/Downloads/fix-civ5-capital-crash.sh --check
 ```
 
 **If it can't find your game** (Steam library on an external drive, say), point it at the file:
@@ -54,7 +54,7 @@ bash fix-civ5-capital-crash.sh --path "/path/to/libCvGameCoreDLL_Expansion2_DLL.
 ## Undoing it
 
 ```
-cd ~/Downloads && bash fix-civ5-capital-crash.sh --undo
+bash ~/Downloads/fix-civ5-capital-crash.sh --undo
 ```
 
 Steam's **Verify integrity of game files** also restores the original, and any game update will

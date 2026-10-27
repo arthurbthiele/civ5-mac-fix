@@ -152,7 +152,7 @@ fi
 offset="$stock_offsets"
 
 if [ "$mode" = "check" ]; then
-  say "Found Civilization V — this copy is affected by the crash and can be fixed."
+  say "Found Civilization V — this copy still has the bug, and can be fixed."
   say "Run the script again without --check to fix it."
   exit 0
 fi
