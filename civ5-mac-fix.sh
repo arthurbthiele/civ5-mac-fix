@@ -14,13 +14,13 @@
 # Full explanation: https://arthurthiele.com/writing/civ-v-capital-crash/
 #
 # Usage:
-#   ./civ5-mac-patch.sh                  apply the crash fixes
-#   ./civ5-mac-patch.sh --crossplay on   play with Windows (not with unswitched Macs)
-#   ./civ5-mac-patch.sh --crossplay off  play with other Macs again
-#   ./civ5-mac-patch.sh --check          report status, change nothing
-#   ./civ5-mac-patch.sh --undo           put everything back as Steam shipped it
-#   ./civ5-mac-patch.sh --verbose        show the raw bytes as it works
-#   ./civ5-mac-patch.sh --path APP       use a specific "Civilization V.app"
+#   ./civ5-mac-fix.sh                  apply the crash fixes
+#   ./civ5-mac-fix.sh --crossplay on   play with Windows (not with unswitched Macs)
+#   ./civ5-mac-fix.sh --crossplay off  play with other Macs again
+#   ./civ5-mac-fix.sh --check          report status, change nothing
+#   ./civ5-mac-fix.sh --undo           put everything back as Steam shipped it
+#   ./civ5-mac-fix.sh --verbose        show the raw bytes as it works
+#   ./civ5-mac-fix.sh --path APP       use a specific "Civilization V.app"
 
 set -euo pipefail
 
