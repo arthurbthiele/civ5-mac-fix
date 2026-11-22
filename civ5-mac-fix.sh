@@ -1,12 +1,13 @@
 #!/bin/bash
 #
-# Patches Civilization V (Steam, macOS) in two independent ways:
+# Patches Civilization V (Steam, macOS) in two ways:
 #
 #   1. Crash fixes. Two crashes that only happen on the 64-bit Mac build:
 #      when a civilization regains its original capital, and when the AI
 #      re-evaluates a city-state it has no previous stance towards.
-#   2. Crossplay switch. Lets this Mac join multiplayer games with Windows
-#      players, by announcing the same build number Windows does.
+#   2. Multiplayer with Windows. Makes this Mac announce the same build
+#      number Windows does, so the two can join each other's games. A Mac
+#      can match Windows or unmodified Macs, not both, so there is a switch.
 #
 # Nothing is downloaded, nothing needs admin rights, and the original game
 # library is backed up before it is touched.
@@ -14,13 +15,13 @@
 # Full explanation: https://arthurthiele.com/writing/civ-v-capital-crash/
 #
 # Usage:
-#   ./civ5-mac-fix.sh                  apply the crash fixes
-#   ./civ5-mac-fix.sh --crossplay on   play with Windows (not with unswitched Macs)
-#   ./civ5-mac-fix.sh --crossplay off  play with other Macs again
-#   ./civ5-mac-fix.sh --check          report status, change nothing
-#   ./civ5-mac-fix.sh --undo           put everything back as Steam shipped it
-#   ./civ5-mac-fix.sh --verbose        show the raw bytes as it works
-#   ./civ5-mac-fix.sh --path APP       use a specific "Civilization V.app"
+#   ./civ5-mac-fix.sh                      fix the crashes, play with Windows
+#   ./civ5-mac-fix.sh --play-with windows  the same, said out loud
+#   ./civ5-mac-fix.sh --play-with macs     fix the crashes, play with unmodified Macs
+#   ./civ5-mac-fix.sh --check              report status, change nothing
+#   ./civ5-mac-fix.sh --undo               put everything back as Steam shipped it
+#   ./civ5-mac-fix.sh --verbose            show the raw bytes as it works
+#   ./civ5-mac-fix.sh --path APP           use a specific "Civilization V.app"
 
 set -euo pipefail
 
@@ -52,7 +53,7 @@ readonly VERSION_FILE_RELATIVE_PATH="Contents/AspyrAssets/global/String/App.json
 readonly BACKUP_SUFFIX=".backup-before-capital-fix"
 
 mode="apply"
-crossplay_target=""
+play_with="windows"
 verbose="no"
 app_override=""
 
@@ -60,10 +61,10 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --check)     mode="check" ;;
     --undo)      mode="undo" ;;
-    --crossplay) shift; mode="crossplay"; crossplay_target="${1:-}" ;;
+    --play-with) shift; play_with="${1:-}" ;;
     --verbose)   verbose="yes" ;;
     --path)      shift; app_override="${1:-}" ;;
-    --help|-h)   sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --help|-h)   sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *)           echo "Unknown option: $1 (try --help)" >&2; exit 1 ;;
   esac
   shift
@@ -73,8 +74,8 @@ say() { printf '%s\n' "$1"; }
 detail() { [ "$verbose" = "yes" ] && printf '   %s\n' "$1" || true; }
 fail() { printf '\n%s\n' "$1" >&2; exit 1; }
 
-if [ "$mode" = "crossplay" ] && [ "$crossplay_target" != "on" ] && [ "$crossplay_target" != "off" ]; then
-  fail "Use --crossplay on or --crossplay off."
+if [ "$play_with" != "windows" ] && [ "$play_with" != "macs" ]; then
+  fail "Use --play-with windows or --play-with macs."
 fi
 
 # Every Steam library on this Mac: the default one, plus any extra drives the
@@ -213,8 +214,8 @@ if [ "$mode" = "check" ]; then
   say "  Capital recapture crash:   $(describe_patch "$capital")"
   say "  City-state stance crash:   $(describe_patch "$city_state")"
   case "$version" in
-    mac)     say "  Multiplayer:               plays with other Macs (as shipped)" ;;
-    windows) say "  Multiplayer:               plays with Windows (crossplay on)" ;;
+    mac)     say "  Multiplayer:               plays with unmodified Macs (as shipped)" ;;
+    windows) say "  Multiplayer:               plays with Windows" ;;
     *)       say "  Multiplayer:               version file not recognised" ;;
   esac
   exit 0
@@ -252,31 +253,9 @@ Verify integrity of game files."
   fi
   if [ "$version" = "windows" ]; then
     replace_line_text "$version_file" "$VERSION_LINE_WINDOWS" "$VERSION_LINE_MAC"
-    say "Crossplay switched off."
+    say "Multiplayer set back to how it shipped."
   fi
   say "Done."
-  exit 0
-fi
-
-if [ "$mode" = "crossplay" ]; then
-  [ "$version" = "unknown" ] && fail "This game's version file is not one I recognise, so I have
-changed nothing. Please report it, and mention your game version."
-  refuse_if_game_running
-  if [ "$crossplay_target" = "on" ]; then
-    [ "$version" = "mac" ] && replace_line_text "$version_file" "$VERSION_LINE_MAC" "$VERSION_LINE_WINDOWS"
-    [ "$(version_state)" = "windows" ] || fail "The change did not verify. Please report this."
-    say "Crossplay is on. This Mac can now join games with Windows players,"
-    say "and with other Macs that have crossplay on. It can no longer join"
-    say "Macs that have it off. Switch back with:  bash \"$0\" --crossplay off"
-  else
-    [ "$version" = "windows" ] && replace_line_text "$version_file" "$VERSION_LINE_WINDOWS" "$VERSION_LINE_MAC"
-    [ "$(version_state)" = "mac" ] || fail "The change did not verify. Please report this."
-    say "Crossplay is off. This Mac plays with other Macs, as shipped."
-  fi
-  case "$capital$city_state" in
-    *stock*) say ""; say "The crash fixes are not applied yet. Run this script with no options to add them." ;;
-  esac
-  say ""
   exit 0
 fi
 
@@ -288,21 +267,7 @@ changed nothing. That is the safe outcome. Please report it rather than
 forcing it, and mention your game version."
 fi
 
-if [ "${capital%% *}" = "fixed" ] && [ "${city_state%% *}" = "fixed" ]; then
-  say "Found Civilization V. Both crash fixes are already applied. Nothing to do."
-  exit 0
-fi
-
 refuse_if_game_running
-
-# Only a fully stock library is worth keeping as "the original". Refreshing
-# the backup here also stops an old one surviving a game update.
-if [ "${capital%% *}" = "stock" ] && [ "${city_state%% *}" = "stock" ]; then
-  cp "$dylib" "$backup"
-  say "Found Civilization V. Original backed up alongside it."
-else
-  say "Found Civilization V, with one fix already in place."
-fi
 
 apply_patch() {
   local state="$1" stock_bytes="$2" fixed_bytes="$3" label="$4"
@@ -317,15 +282,43 @@ apply_patch() {
   say "Fixed: $label."
 }
 
-apply_patch "$capital" "$CAPITAL_STOCK_BYTES" "$CAPITAL_FIXED_BYTES" "capital recapture crash"
-apply_patch "$city_state" "$CITY_STATE_STOCK_BYTES" "$CITY_STATE_FIXED_BYTES" "city-state stance crash"
-
-# Patching invalidates Aspyr's signature; macOS needs a valid one to load the file.
-resign_or_explain
-say "File re-signed so macOS will load it."
+if [ "${capital%% *}" = "fixed" ] && [ "${city_state%% *}" = "fixed" ]; then
+  say "Found Civilization V. Both crash fixes are already in place."
+else
+  # Only a fully stock library is worth keeping as "the original". Refreshing
+  # the backup here also stops an old one surviving a game update.
+  if [ "${capital%% *}" = "stock" ] && [ "${city_state%% *}" = "stock" ]; then
+    cp "$dylib" "$backup"
+    say "Found Civilization V. Original backed up alongside it."
+  else
+    say "Found Civilization V, with one fix already in place."
+  fi
+  apply_patch "$capital" "$CAPITAL_STOCK_BYTES" "$CAPITAL_FIXED_BYTES" "capital recapture crash"
+  apply_patch "$city_state" "$CITY_STATE_STOCK_BYTES" "$CITY_STATE_FIXED_BYTES" "city-state stance crash"
+  # Patching invalidates Aspyr's signature; macOS needs a valid one to load the file.
+  resign_or_explain
+  say "File re-signed so macOS will load it."
+fi
 
 say ""
-say "All done. To play with Windows friends as well, run:"
-say "  bash \"$0\" --crossplay on"
+if [ "$version" = "unknown" ]; then
+  say "Multiplayer: this game's version file is not one I recognise, so I have"
+  say "left multiplayer alone. Please report it, and mention your game version."
+elif [ "$play_with" = "windows" ]; then
+  [ "$version" = "mac" ] && replace_line_text "$version_file" "$VERSION_LINE_MAC" "$VERSION_LINE_WINDOWS"
+  [ "$(version_state)" = "windows" ] || fail "The multiplayer change did not verify. Please report this."
+  say "Multiplayer: set to play with Windows."
+  say "This Mac can now join Windows players, and Macs set up the same way."
+  say "It can't join unmodified Macs while set like this. To switch, run:"
+  say "  bash \"$0\" --play-with macs"
+else
+  [ "$version" = "windows" ] && replace_line_text "$version_file" "$VERSION_LINE_WINDOWS" "$VERSION_LINE_MAC"
+  [ "$(version_state)" = "mac" ] || fail "The multiplayer change did not verify. Please report this."
+  say "Multiplayer: set to play with unmodified Macs, as the game shipped."
+  say "To play with Windows instead, run:"
+  say "  bash \"$0\" --play-with windows"
+fi
+
+say ""
 say "To undo everything at any time, run:  bash \"$0\" --undo"
 say ""
